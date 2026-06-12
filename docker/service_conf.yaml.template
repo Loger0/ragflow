@@ -55,6 +55,13 @@ seekdb:
     password: '${SEEKDB_PASSWORD:-infini_rag_flow}'
     host: '${SEEKDB_HOST:-seekdb}'
     port: ${SEEKDB_PORT:-2881}
+vastbase:
+  host: '${VASTBASE_HOST:-172.16.105.107}'
+  port: ${VASTBASE_PORT:-15432}
+  db_name: '${VASTBASE_DOC_DBNAME:-vastbase}'
+  user: '${VASTBASE_USER:-aidev}'
+  password: '${VASTBASE_PASSWORD:-Vbase_123456}'
+  max_connections: ${VASTBASE_MAX_CONNECTIONS:-300}
 redis:
   db: 1
   username: '${REDIS_USERNAME:-}'

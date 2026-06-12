@@ -43,6 +43,13 @@ oceanbase:
     password: 'infini_rag_flow'
     host: 'localhost'
     port: 2881
+vastbase:
+  host: 'localhost'
+  port: 15432
+  db_name: 'vastbase'
+  user: 'aidev'
+  password: 'Vbase_123456'
+  max_connections: 300
 redis:
   db: 1
   username: ''
