@@ -22,6 +22,9 @@ import time
 from abc import abstractmethod
 from typing import Any
 
+from sqlalchemy import Column, JSON, Table, Text
+from sqlalchemy.dialects.postgresql import VARCHAR
+
 from common.doc_store.doc_store_base import DocStoreConnection, MatchExpr, OrderByExpr
 
 ATTEMPT_TIME = 2
@@ -37,9 +40,6 @@ vector_search_template = "%s <=> '%s'"
 vector_column_pattern = re.compile(r"q_(?P<vector_size>\d+)_vec")
 
 # Document metadata table columns (PostgreSQL types)
-from sqlalchemy import Column, JSON, Table, Text
-from sqlalchemy.dialects.postgresql import VARCHAR
-
 doc_meta_columns = [
     Column("id", VARCHAR(256), primary_key=True, comment="document id"),
     Column("kb_id", VARCHAR(256), nullable=False, comment="knowledge base id"),
@@ -154,22 +154,27 @@ class VastbaseConnectionBase(DocStoreConnection):
     def _execute_sql(self, sql: str, params: tuple = None):
         """Execute a raw SQL statement and return all rows.
 
+        Uses cursor.description to distinguish DML statements (INSERT/UPDATE/DELETE)
+        from queries (SELECT).  DML statements return an empty list after commit;
+        queries return fetched rows.
+
         Args:
             sql: SQL statement to execute.
             params: Optional query parameters.
 
         Returns:
-            List of result rows.
+            List of result rows (empty list for DML statements).
         """
         try:
             cursor = self.client.cursor()
             cursor.execute(sql, params)
-            try:
-                return cursor.fetchall()
-            except Exception:
-                # For INSERT/UPDATE/DELETE statements
+            # ADAPT: Use DB-API 2.0 cursor.description to distinguish DML from queries.
+            # cursor.description is None for statements that produce no result set
+            # (INSERT, UPDATE, DELETE, CREATE, ALTER, etc.).
+            if cursor.description is None:
                 self.client.commit()
                 return []
+            return cursor.fetchall()
         except Exception as e:
             self.logger.error(f"SQL execution error: {str(e)}, SQL: {sql}")
             try:

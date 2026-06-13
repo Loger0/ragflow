@@ -108,7 +108,10 @@ class VastbaseConnectionPool:
     def refresh_client(self):
         """Refresh connection if unhealthy."""
         try:
-            self.client.execute("SELECT 1")
+            # ADAPT: Use cursor for health ping — standard DB-API 2.0 pattern
+            cur = self.client.cursor()
+            cur.execute("SELECT 1")
+            cur.close()
             return self.client
         except Exception as e:
             logger.warning(f"Vastbase connection unhealthy: {str(e)}, reconnecting...")

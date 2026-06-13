@@ -176,14 +176,17 @@ class TestVastbaseConnectionPool:
         """Test refresh_client returns client when SELECT 1 succeeds."""
         mock_pyvastbase, _ = _setup_mocks()
         mock_client = Mock()
-        mock_client.execute.return_value = None
+        mock_cursor = Mock()
+        mock_client.cursor.return_value = mock_cursor
         mock_pyvastbase.connect.return_value = mock_client
         try:
             import common.doc_store.vastbase_conn_pool as vcp
             pool = vcp.VastbaseConnectionPool()
             result = pool.refresh_client()
             assert result is mock_client
-            mock_client.execute.assert_called_with("SELECT 1")
+            mock_client.cursor.assert_called()
+            mock_cursor.execute.assert_called_with("SELECT 1")
+            mock_cursor.close.assert_called_once()
         finally:
             _teardown_mocks()
 
@@ -191,7 +194,9 @@ class TestVastbaseConnectionPool:
         """Test refresh_client reconnects when SELECT 1 fails."""
         mock_pyvastbase, _ = _setup_mocks()
         mock_client = Mock()
-        mock_client.execute.side_effect = Exception("Connection lost")
+        mock_cursor = Mock()
+        mock_cursor.execute.side_effect = Exception("Connection lost")
+        mock_client.cursor.return_value = mock_cursor
         mock_pyvastbase.connect.return_value = mock_client
         new_client = Mock()
         mock_pyvastbase.get_connection.return_value = new_client
